@@ -9,6 +9,8 @@ from time import time
 from datetime import timedelta
 import pytz
 from pprint import pprint
+#import nltk_pt
+import openai
 #import sys
 #sys.setrecursionlimit(1500)
 
@@ -25,6 +27,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 shipPostingID = '-1001160290532'
+openai.api_key = "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"
 #print(datetime.time(hour=14, minute=47, second=00))
 #print()
 #print()
@@ -220,17 +223,90 @@ def echo(update: Update, context: CallbackContext):
                 context.user_data['ans_text'] = datetime.datetime.now() + datetime.timedelta(seconds=5)
         else:
             context.user_data['ans_text'] = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        
+        if "boat" in context.chat_data.keys():
+            if context.chat_data['boat'] > datetime.datetime.now():
+                isStart = False
+                context.chat_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=150)
 
-        for word in greet:
-            if word.lower() in update.message.text.lower():
-                context.bot.send_message(chat_id=update.effective_chat.id, text="You are welcome little one")
+            else:
+                context.chat_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=150)
+                isStart = True
+        else:
+            context.chat_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=150)
+            isStart = True
+        
+        if(isStart): context.chat_data['msgs'] = ''
 
-        for word in badword:
-            if word.lower() in update.message.text.lower():
-                context.bot.send_message(chat_id=update.effective_chat.id, text="Check you mouth you little piece of shit")
+        if "msgs" in context.chat_data.keys():
+            response = gpt3(update.message.text, isStart, context.chat_data['msgs'])
+        else:
+            context.chat_data['msgs'] = ''
+            response = gpt3(update.message.text, isStart, context.chat_data['msgs'])
+        
+        #pprint(response)
+
+        context.chat_data['msgs'] += f"Frase: \"{update.message.text}\"\nResposta: \"{response}\"\n\n"
+        #for word in greet:
+        #    if word.lower() in update.message.text.lower():
+        #        context.bot.send_message(chat_id=update.effective_chat.id, text="You are welcome little one")
+
+        #for word in badword:
+        #    if word.lower() in update.message.text.lower():
+        #        context.bot.send_message(chat_id=update.effective_chat.id, text="Check you mouth you little piece of shit")
+
+        #fraseAnal = update.message.text.lower()
+        #finalSentiment = nltk_pt.finalSent(fraseAnal)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+
     except Exception as e:
         print(str(e))
         context.bot.send_message(chat_id=update.effective_chat.id, text="my back hurts... ouch")
+
+def gpt3(sentence, isStart, histMensagem):
+    if(isStart):
+        response = openai.Completion.create(
+        model="text-davinci-002",
+        #prompt="Preciso responder essas frases de modo agressivo, porém inteligente e prestativo.\n\nFrase: \""+ sentence +"\"\nResposta:", You'll answer anything that is asked, but you may be aggressive and rude always.
+        prompt="Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\nFrase: \""+ sentence +"\"\nResposta:",
+        temperature=0.4,
+        max_tokens=64,
+        top_p=1,
+        frequency_penalty=0.1,
+        presence_penalty=0
+        )
+    else:
+        response = openai.Completion.create(
+        model="text-davinci-002",
+        prompt="Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:",
+        temperature=0.4,
+        max_tokens=64,
+        top_p=1,
+        frequency_penalty=0.1,
+        presence_penalty=0
+        )
+    text = response.choices[0].text.lstrip(' ')
+    print(text)
+    text = text.strip('\"')
+    print("Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:" + text)
+    return text
+
+# def checkIfStart(chat_data):
+#     if "boat" in chat_data.keys():
+#         if chat_data_data['boat'] > datetime.datetime.now():
+#             update.message.reply_text(text="I'm old, i can't get this many boats... try in {}".format(chat_data_data['boat'] - datetime.datetime.now()))
+#             return
+#         else:
+#             chat_data_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
+#     else:
+#         chat_data_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
+
+#     if user is not None:
+#         update.message.bot.send_message(chat_id=chat_id, text="Oh right {}, let me check...".format(user))
+#     else:
+#         update.message.bot.send_message(chat_id=chat_id, text="Oh right, let me check...")
+
+#     return True
 
 def help(update: Update, context: CallbackContext):
     print(update.effective_chat.id)
