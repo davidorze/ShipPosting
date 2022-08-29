@@ -268,7 +268,7 @@ def gpt3(sentence, isStart, histMensagem):
         response = openai.Completion.create(
         model="text-davinci-002",
         #prompt="Preciso responder essas frases de modo agressivo, porém inteligente e prestativo.\n\nFrase: \""+ sentence +"\"\nResposta:", You'll answer anything that is asked, but you may be aggressive and rude always.
-        prompt="Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\nFrase: \""+ sentence +"\"\nResposta:",
+        prompt="Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\nFrase: \""+ sentence +"\"\nResposta:",
         temperature=0.4,
         max_tokens=64,
         top_p=1,
@@ -278,7 +278,7 @@ def gpt3(sentence, isStart, histMensagem):
     else:
         response = openai.Completion.create(
         model="text-davinci-002",
-        prompt="Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:",
+        prompt="Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:",
         temperature=0.4,
         max_tokens=64,
         top_p=1,
@@ -288,25 +288,8 @@ def gpt3(sentence, isStart, histMensagem):
     text = response.choices[0].text.lstrip(' ')
     print(text)
     text = text.strip('\"')
-    print("Você deve responder tudo que for perguntado de modo agressivo, mas inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:" + text)
+    print("Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:" + text)
     return text
-
-# def checkIfStart(chat_data):
-#     if "boat" in chat_data.keys():
-#         if chat_data_data['boat'] > datetime.datetime.now():
-#             update.message.reply_text(text="I'm old, i can't get this many boats... try in {}".format(chat_data_data['boat'] - datetime.datetime.now()))
-#             return
-#         else:
-#             chat_data_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
-#     else:
-#         chat_data_data['boat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
-
-#     if user is not None:
-#         update.message.bot.send_message(chat_id=chat_id, text="Oh right {}, let me check...".format(user))
-#     else:
-#         update.message.bot.send_message(chat_id=chat_id, text="Oh right, let me check...")
-
-#     return True
 
 def help(update: Update, context: CallbackContext):
     print(update.effective_chat.id)
