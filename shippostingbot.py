@@ -9,10 +9,9 @@ from time import time
 from datetime import timedelta
 import pytz
 from pprint import pprint
-#import nltk_pt
 import openai
-#import sys
-#sys.setrecursionlimit(1500)
+import urllib
+import SettingEnvVar
 
 
 from telegram.ext import Updater, CommandHandler, DictPersistence, MessageHandler, Filters, CallbackContext
@@ -27,10 +26,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 shipPostingID = '-1001160290532'
-openai.api_key = "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"
-#print(datetime.time(hour=14, minute=47, second=00))
-#print()
-#print()
+openai.api_key = os.getenv('OPEN_TOKEN')
 
 ship_types = ["Amphibious warfare","Barque","Barquentine","Battlecruiser","Galleon","Galleass","Galliot","Karve","Knarr",
         "Containers","Lorcha","Liberty","Mistico","Penteconter","Steamship","Trabaccolo","Trireme","Yacht",
@@ -82,41 +78,83 @@ ship_types = ["Amphibious warfare","Barque","Barquentine","Battlecruiser","Galle
         "Turtle (submarine)","Victory","Wilhelm Gustloff"]
 
 #get images from google
-def get_images():
+def get_images(custom):
+    if custom is None: 
+        chosen_ship = random.choice(ship_types) + " ship"
+        print('None')
+    else: 
+        chosen_ship = custom
+        print(chosen_ship)
     response = google_images_download.googleimagesdownload()   #class instantiation
-    chosen_ship = random.choice(ship_types) + " ship"
     arguments = {"keywords":chosen_ship,format:"jpg","limit":10,"print_urls":True}   #creating list of arguments
     paths = response.download(arguments)   #passing the arguments to the function
 
     return chosen_ship, paths
 
+#generate images with Dall-E on Openai
+def gen_images(custom):
+    if custom is None: 
+        chosen_ship = random.choice(ship_types) + " ship"
+        print('None')
+    else: 
+        chosen_ship = custom
+        print(chosen_ship)
+    response = openai.Image.create(
+    prompt=chosen_ship,
+    n=1,
+    size="1024x1024"
+    )
+    image_url = response['data'][0]['url']
+    path = chosen_ship + '.png'
+    urllib.request.urlretrieve(image_url, path)
+
+    return chosen_ship, path
+
 # setting daily boat morning
 def morningBoat(context: CallbackContext):
     message = "Good Morning! Have a nice Boat!"
     context.bot.send_chat_action(chat_id=shipPostingID, action=ChatAction.UPLOAD_PHOTO)
-    chosen_ship, paths = get_images()
+    whichFunction = [get_images, gen_images]
+    execFunc = random.choice(whichFunction)
+    chosen_ship, paths = execFunc()
     context.bot.send_message(chat_id=shipPostingID, text=message)
-    if not paths[0][chosen_ship]:
-        chosen_ship, paths = get_images()
-
-    if not paths[0][chosen_ship]:
-        #context.bot.send_message(chat_id=shipPostingID, text="You are out of luck, I found no nice {} for you!".format(chosen_ship))
+    try:
+        if not paths[0][chosen_ship]:
+            chosen_ship, paths = execFunc()
+    except:
         return
-    for path in paths[0][chosen_ship]:
-        real_path = random.choice(paths[0][chosen_ship])
+
+    if execFunc == get_images: 
+        for path in paths[0][chosen_ship]:
+            real_path = random.choice(paths[0][chosen_ship])
+            try:
+                with Image.open(real_path) as im:
+                    im.verify()
+                    print('ok')
+                context.bot.send_photo(photo=open(real_path, 'rb'),caption='This is the {} I chose just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
+                break
+            except Exception as e:
+                print(str(e))
+    else:
         try:
-            with Image.open(real_path) as im:
+            chosen_ship, path = gen_images(None)
+        except Exception as e:
+            if 'safety' in str(e):
+                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
+            return
+        try:
+            with Image.open(path) as im:
                 im.verify()
                 print('ok')
-            context.bot.send_photo(photo=open(real_path, 'rb'),caption='This is the {} I chose just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
-            break
+            context.bot.send_photo(photo=open(path, 'rb'),caption='This is the {} I created just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
         except Exception as e:
             print(str(e))
 
 def nightBoatEntry(context: CallbackContext):
     message = "Good Night! Have a nice Boat!"
     context.bot.send_chat_action(chat_id=shipPostingID, action=ChatAction.UPLOAD_PHOTO)
-    chosen_ship, paths = get_images()
+    whichFunction = [get_images, gen_images]
+    chosen_ship, paths = random.choice(whichFunction)()
     context.bot.send_message(chat_id=shipPostingID, text=message)
     if not paths[0][chosen_ship]:
         chosen_ship, paths = get_images()
@@ -134,28 +172,45 @@ def nightBoatEntry(context: CallbackContext):
             break
         except Exception as e:
             print(str(e))
+            
 
 
 # setting afternoon boat morning
 def nightBoat(context: CallbackContext):
     message = "Good Afternoon! Have a nice Boat!"
-    context.bot.send_chat_action(chat_id=shipPostingID, action=ChatAction.UPLOAD_PHOTO)
-    chosen_ship, paths = get_images()
+    whichFunction = [get_images, gen_images]
+    execFunc = random.choice(whichFunction)
+    chosen_ship, paths = execFunc()
     context.bot.send_message(chat_id=shipPostingID, text=message)
-    if not paths[0][chosen_ship]:
-        chosen_ship, paths = get_images()
-
-    if not paths[0][chosen_ship]:
-        #context.bot.send_message(chat_id=shipPostingID, text="You are out of luck, I found no nice {} for you!".format(chosen_ship))
+    try:
+        if not paths[0][chosen_ship]:
+            chosen_ship, paths = execFunc()
+    except:
         return
-    for path in paths[0][chosen_ship]:
-        real_path = random.choice(paths[0][chosen_ship])
+
+    if execFunc == get_images: 
+        for path in paths[0][chosen_ship]:
+            real_path = random.choice(paths[0][chosen_ship])
+            try:
+                with Image.open(real_path) as im:
+                    im.verify()
+                    print('ok')
+                context.bot.send_photo(photo=open(real_path, 'rb'),caption='This is the {} I chose just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
+                break
+            except Exception as e:
+                print(str(e))
+    else:
         try:
-            with Image.open(real_path) as im:
+            chosen_ship, path = gen_images(None)
+        except Exception as e:
+            if 'safety' in str(e):
+                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
+            return
+        try:
+            with Image.open(path) as im:
                 im.verify()
                 print('ok')
-            context.bot.send_photo(photo=open(real_path, 'rb'),caption='This is the {} I chose just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
-            break
+            context.bot.send_photo(photo=open(path, 'rb'),caption='This is the {} I created just for you'.format(chosen_ship.lower()), chat_id=shipPostingID)
         except Exception as e:
             print(str(e))
 
@@ -182,9 +237,13 @@ def showmetheboat(update: Update, context: CallbackContext):
         update.message.bot.send_message(chat_id=chat_id, text="Oh right, let me check...")
 
     context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.UPLOAD_PHOTO)
-    chosen_ship, paths = get_images()
+    if context.args is []:
+        customShip = None
+    else:
+        customShip = ' '.join(context.args)
+    chosen_ship, paths = get_images(customShip)
     if not paths[0][chosen_ship]:
-        chosen_ship, paths = get_images()
+        chosen_ship, paths = get_images(customShip)
 
     if not paths[0][chosen_ship]:
         update.message.bot.send_message(chat_id=chat_id, text="You are out of luck, I found no nice {} for you!".format(chosen_ship))
@@ -202,6 +261,50 @@ def showmetheboat(update: Update, context: CallbackContext):
 
 
     for path in paths[0][chosen_ship]:
+        os.remove(path)
+
+#GenMeTheBoat
+def genmetheboat(update: Update, context: CallbackContext):
+    user = update.effective_user.username
+    if update.effective_user.is_bot:
+        return
+
+    print("sending boat to {}".format(user))
+    chat_id = update.message.chat_id
+    if "genboat" in context.user_data.keys():
+        if context.user_data['genboat'] > datetime.datetime.now():
+            update.message.reply_text(text="I'm old, i can't generate this many boats... try in {}".format(context.user_data['genboat'] - datetime.datetime.now()))
+            return
+        else:
+            context.user_data['genboat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    else:
+        context.user_data['genboat'] = datetime.datetime.now() + datetime.timedelta(seconds=30)
+
+    if user is not None:
+        update.message.bot.send_message(chat_id=chat_id, text="Oh right {}, let me generate...".format(user))
+    else:
+        update.message.bot.send_message(chat_id=chat_id, text="Oh right, let me generate...")
+
+    context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.UPLOAD_PHOTO)
+    if context.args is []:
+        customShip = None
+    else:
+        customShip = ' '.join(context.args)
+    try:
+        chosen_ship, path = gen_images(customShip)
+    except Exception as e:
+        if 'safety' in str(e):
+            context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
+        return
+    
+    try:
+        with Image.open(path) as im:
+            im.verify()
+            print('ok')
+        update.message.reply_photo(photo=open(path, 'rb'),caption='This is the {} I created just for you'.format(chosen_ship.lower()))
+    except Exception as e:
+        print(str(e))
+
         os.remove(path)
 
 
@@ -297,7 +400,7 @@ def help(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 # Set token bot
-updater = Updater("5146616146:AAGQqwbLgZdohcNYdAcd0YMBlajmKab6ooY", use_context=True)
+updater = Updater(os.getenv('BOT_TOKEN'), use_context=True)
 
 # Get the dispatcher to register handlers
 dp = updater.dispatcher
@@ -305,6 +408,7 @@ dp = updater.dispatcher
 dp.add_handler(CommandHandler("start", start))
 dp.add_handler(CommandHandler("help", help))
 dp.add_handler(CommandHandler("showmetheboat", showmetheboat))
+dp.add_handler(CommandHandler("genmetheboat", genmetheboat))
 
 dp.add_handler(MessageHandler(~Filters.command & Filters.text, echo))
 dp.run_async
