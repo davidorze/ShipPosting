@@ -79,7 +79,7 @@ ship_types = ["Amphibious warfare","Barque","Barquentine","Battlecruiser","Galle
 
 #get images from google
 def get_images(custom):
-    if custom is None: 
+    if custom is '': 
         chosen_ship = random.choice(ship_types) + " ship"
         print('None')
     else: 
@@ -93,9 +93,9 @@ def get_images(custom):
 
 #generate images with Dall-E on Openai
 def gen_images(custom):
-    if custom is None: 
-        chosen_ship = random.choice(ship_types) + " ship"
+    if custom is '': 
         print('None')
+        chosen_ship = random.choice(ship_types) + " ship"
     else: 
         chosen_ship = custom
         print(chosen_ship)
@@ -116,7 +116,12 @@ def morningBoat(context: CallbackContext):
     context.bot.send_chat_action(chat_id=shipPostingID, action=ChatAction.UPLOAD_PHOTO)
     whichFunction = [get_images, gen_images]
     execFunc = random.choice(whichFunction)
-    chosen_ship, paths = execFunc()
+    try:
+        chosen_ship, paths = execFunc(None)
+    except Exception as e:
+            if 'safety' in str(e):
+                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
+            return
     context.bot.send_message(chat_id=shipPostingID, text=message)
     try:
         if not paths[0][chosen_ship]:
@@ -136,12 +141,6 @@ def morningBoat(context: CallbackContext):
             except Exception as e:
                 print(str(e))
     else:
-        try:
-            chosen_ship, path = gen_images(None)
-        except Exception as e:
-            if 'safety' in str(e):
-                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
-            return
         try:
             with Image.open(path) as im:
                 im.verify()
@@ -180,7 +179,12 @@ def nightBoat(context: CallbackContext):
     message = "Good Afternoon! Have a nice Boat!"
     whichFunction = [get_images, gen_images]
     execFunc = random.choice(whichFunction)
-    chosen_ship, paths = execFunc()
+    try:
+        chosen_ship, paths = execFunc(None)
+    except Exception as e:
+            if 'safety' in str(e):
+                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
+            return
     context.bot.send_message(chat_id=shipPostingID, text=message)
     try:
         if not paths[0][chosen_ship]:
@@ -200,12 +204,6 @@ def nightBoat(context: CallbackContext):
             except Exception as e:
                 print(str(e))
     else:
-        try:
-            chosen_ship, path = gen_images(None)
-        except Exception as e:
-            if 'safety' in str(e):
-                context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
-            return
         try:
             with Image.open(path) as im:
                 im.verify()
@@ -238,7 +236,7 @@ def showmetheboat(update: Update, context: CallbackContext):
 
     context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.UPLOAD_PHOTO)
     if context.args is []:
-        customShip = None
+        customShip = 'None'
     else:
         customShip = ' '.join(context.args)
     chosen_ship, paths = get_images(customShip)
@@ -293,6 +291,7 @@ def genmetheboat(update: Update, context: CallbackContext):
     try:
         chosen_ship, path = gen_images(customShip)
     except Exception as e:
+        print(str(e))
         if 'safety' in str(e):
             context.bot.send_message(chat_id=shipPostingID, text='Y̴̅ͅO̷̤̽U̷̬̓ ̶̦̄A̷͉͐R̸͖̐E̸͎̍ ̵̛̺N̸̮͝O̵̬͋W̸͉͋ ̷̱͒B̷͓̀Ẽ̵̝I̷̭͌N̸̛̩G̵͉̾ ̶̰͑C̵͙͆Ë̷͕́Ṇ̶̽S̵͔̀O̸̙̓R̵̪̉E̵̩̽Ḍ̶͂ ̷͕͐B̸͎̄Ÿ̵͚́ ̸͙̂T̸̀ͅH̵̞̿Ë̶̟́ ̷̞̍G̸͙̀R̸̡͆Ě̷̠A̸̝̓Ṱ̸͘Ḙ̸̈S̷̯͐T̴̠̆ ̸͍̐Ṕ̷̰Ǫ̶̀W̴̨̓E̶͎͊R̴̨̓ ̸͙̆Ö̸̥́F̷͈͗ ̸͒͜Ḯ̴̜N̵̼͗T̷̯̐Ȩ̶́Ŗ̸̊N̷͙͛Ě̵͙T̷͔̐,̵̢͒ ̴͚̄P̷̣̊L̵̖̏E̸̟̔Ȃ̶̻S̸̜̋E̵̛̖ ̷̞̇T̷̠̓R̷͋ͅỴ̷̾ ̴̭͆T̴̳̏Ȏ̴̪ ̵̖̌A̴͚̓V̴̠̚O̷̖̚I̶̦͐D̴̻̑ ̶͇͌S̶̩͌O̵̟̍M̸̫̐È̸̞ ̸̗̃T̸͕͗Ö̵̮P̴̜̊Ì̸̘C̴̃͜S̵͉̓!̶̞̾')
         return
