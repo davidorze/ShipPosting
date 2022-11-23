@@ -304,7 +304,7 @@ def genmetheboat(update: Update, context: CallbackContext):
     except Exception as e:
         print(str(e))
 
-        os.remove(path)
+    os.remove(path)
 
 
 # writting functionality of the command
@@ -371,7 +371,7 @@ def gpt3(sentence, isStart, histMensagem):
         model="text-davinci-002",
         #prompt="Preciso responder essas frases de modo agressivo, porém inteligente e prestativo.\n\nFrase: \""+ sentence +"\"\nResposta:", You'll answer anything that is asked, but you may be aggressive and rude always.
         prompt="Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\nFrase: \""+ sentence +"\"\nResposta:",
-        temperature=0.4,
+        temperature=0.8,
         max_tokens=64,
         top_p=1,
         frequency_penalty=0.1,
@@ -381,7 +381,7 @@ def gpt3(sentence, isStart, histMensagem):
         response = openai.Completion.create(
         model="text-davinci-002",
         prompt="Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:",
-        temperature=0.4,
+        temperature=0.6,
         max_tokens=64,
         top_p=1,
         frequency_penalty=0.1,
@@ -392,6 +392,23 @@ def gpt3(sentence, isStart, histMensagem):
     text = text.strip('\"')
     print("Você deve responder tudo que for perguntado de modo prestativo e inteligente.\n\n"+ histMensagem +"Frase: \""+ sentence +"\"\nResposta:" + text)
     return text
+
+def crazyFoodGen(context: CallbackContext):
+    print('generating crazy food')
+    response = gpt3('describe for me the craziest four random ingredients that you would use to make a dish right now', True, '')
+    result = " ".join(line.strip() for line in response.splitlines()).strip()
+    print(result + ' mixed together in one dish')
+    response, path = gen_images(result)
+
+    try:
+        with Image.open(path) as im:
+            im.verify()
+            print('ok')
+        context.bot.send_photo(photo=open(path, 'rb'),caption='This is the dish with {} I made for you to lunch, itadakimasu!'.format(result.lower().strip()), chat_id=shipPostingID)
+    except Exception as e:
+        print(str(e))
+
+    os.remove(path)
 
 def help(update: Update, context: CallbackContext):
     print(update.effective_chat.id)
@@ -408,7 +425,7 @@ dp.add_handler(CommandHandler("start", start))
 dp.add_handler(CommandHandler("help", help))
 dp.add_handler(CommandHandler("showmetheboat", showmetheboat))
 dp.add_handler(CommandHandler("genmetheboat", genmetheboat))
-
+#dp.add_handler(CommandHandler("food", crazyFoodGen))
 dp.add_handler(MessageHandler(~Filters.command & Filters.text, echo))
 dp.run_async
 
@@ -416,7 +433,7 @@ j = updater.job_queue
 job_daily = j.run_daily(morningBoat, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=10, minute=00, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
 #job_once = j.run_once(nightBoatEntry, 30)
 job_daily2 = j.run_daily(nightBoat, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=17, minute=30, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
-#job_dailyLunch = j.run_daily(lunch_suggestion, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=11, minute=30, second=00))
+job_dailyLunch = j.run_daily(crazyFoodGen, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=11, minute=45, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
 
 # Start the Bot
 updater.start_polling()
