@@ -411,9 +411,6 @@ class googleimagesdownload:
             formatted_object['image_width'] = main[1]
             formatted_object['image_link'] = main[0]
             formatted_object['image_format'] = main[0][-1 * (len(main[0]) - main[0].rfind(".") - 1):]
-            formatted_object['image_description'] = info['2003'][3]
-            formatted_object['image_host'] = info['2003'][17]
-            formatted_object['image_source'] = info['2003'][2]
             formatted_object['image_thumbnail_url'] = data[2][0]
         except Exception as e:
             print(e)
@@ -662,7 +659,7 @@ class googleimagesdownload:
 
     # Download Image thumbnails
     def download_image_thumbnail(self, image_url, main_directory, dir_name, return_image_name, print_urls,
-                                 socket_timeout, print_size, no_download, save_source, img_src, ignore_urls):
+                                 socket_timeout, print_size, no_download, save_source, ignore_urls):
         if print_urls or no_download:
             print("Image URL: " + image_url)
         if no_download:
@@ -690,7 +687,7 @@ class googleimagesdownload:
                     if save_source:
                         list_path = main_directory + "/" + save_source + ".txt"
                         list_file = open(list_path, 'a')
-                        list_file.write(path + '\t' + img_src + '\n')
+                        list_file.write(path + '\t' + 'img_src' + '\n')
                         list_file.close()
                 except OSError as e:
                     download_status = 'fail'
@@ -729,7 +726,7 @@ class googleimagesdownload:
 
     # Download Images
     def download_image(self, image_url, image_format, main_directory, dir_name, count, print_urls, socket_timeout,
-                       prefix, print_size, no_numbering, no_download, save_source, img_src, silent_mode, thumbnail_only,
+                       prefix, print_size, no_numbering, no_download, save_source, silent_mode, thumbnail_only,
                        format, ignore_urls):
         if not silent_mode:
             if print_urls or no_download:
@@ -809,7 +806,7 @@ class googleimagesdownload:
                     if save_source:
                         list_path = main_directory + "/" + save_source + ".txt"
                         list_file = open(list_path, 'a')
-                        list_file.write(path + '\t' + img_src + '\n')
+                        list_file.write(path + '\t' + 'img_src' + '\n')
                         list_file.close()
                     absolute_path = os.path.abspath(path)
                 except OSError as e:
@@ -906,8 +903,8 @@ class googleimagesdownload:
                     object['image_link'], object['image_format'], main_directory, dir_name, count,
                     arguments['print_urls'], arguments['socket_timeout'], arguments['prefix'], arguments['print_size'],
                     arguments['no_numbering'], arguments['no_download'], arguments['save_source'],
-                    object['image_source'], arguments["silent_mode"], arguments["thumbnail_only"], arguments['format'],
-                    arguments['ignore_urls'])
+                    arguments["silent_mode"], arguments["thumbnail_only"], arguments['format'], arguments['ignore_urls']
+                    )
                 if not arguments["silent_mode"]:
                     print(download_message)
                 if download_status == "success":
@@ -917,8 +914,8 @@ class googleimagesdownload:
                         download_status, download_message_thumbnail = self.download_image_thumbnail(
                             object['image_thumbnail_url'], main_directory, dir_name, return_image_name,
                             arguments['print_urls'], arguments['socket_timeout'], arguments['print_size'],
-                            arguments['no_download'], arguments['save_source'], object['image_source'],
-                            arguments['ignore_urls'])
+                            arguments['no_download'], arguments['save_source'], arguments['ignore_urls']
+                            )
                         if not arguments["silent_mode"]:
                             print(download_message_thumbnail)
 

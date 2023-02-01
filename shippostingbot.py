@@ -79,7 +79,7 @@ ship_types = ["Amphibious warfare","Barque","Barquentine","Battlecruiser","Galle
 
 #get images from google
 def get_images(custom):
-    if custom is '': 
+    if custom == '': 
         chosen_ship = random.choice(ship_types) + " ship"
         print('None')
     else: 
@@ -93,7 +93,7 @@ def get_images(custom):
 
 #generate images with Dall-E on Openai
 def gen_images(custom):
-    if custom is '': 
+    if custom == '': 
         print('None')
         chosen_ship = random.choice(ship_types) + " ship"
     else: 
@@ -424,7 +424,7 @@ dp = updater.dispatcher
 dp.add_handler(CommandHandler("start", start))
 dp.add_handler(CommandHandler("help", help))
 dp.add_handler(CommandHandler("showmetheboat", showmetheboat))
-dp.add_handler(CommandHandler("genmetheboat", genmetheboat))
+#dp.add_handler(CommandHandler("genmetheboat", genmetheboat))
 #dp.add_handler(CommandHandler("food", crazyFoodGen))
 dp.add_handler(MessageHandler(~Filters.command & Filters.text, echo))
 dp.run_async
@@ -433,7 +433,7 @@ j = updater.job_queue
 job_daily = j.run_daily(morningBoat, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=10, minute=00, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
 #job_once = j.run_once(nightBoatEntry, 30)
 job_daily2 = j.run_daily(nightBoat, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=17, minute=30, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
-job_dailyLunch = j.run_daily(crazyFoodGen, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=11, minute=45, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
+#job_dailyLunch = j.run_daily(crazyFoodGen, days=(0, 1, 2, 3, 4, 5, 6), time=datetime.time(hour=11, minute=45, second=00, tzinfo=pytz.timezone('America/Sao_Paulo')))
 
 # Start the Bot
 updater.start_polling()
